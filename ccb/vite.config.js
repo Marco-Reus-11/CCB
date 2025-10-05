@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
         }
       }),
       viteCompression({
-        verbose: true,       // 打印压缩结果
+        verbose: true,      // 打印压缩结果
         disable: false,      // 启用压缩
         threshold: 10240,    // 大于 10kb 才压缩
         algorithm: 'gzip',   // 可选 'gzip' 或 'brotliCompress'
@@ -28,8 +28,8 @@ export default defineConfig(({ mode }) => {
     server: {
       host: 'localhost',
       port: 5173,
-      open: true,
-       allowedHosts: ['.cpolar.cn'],
+      // open: true,
+      allowedHosts: ['.cpolar.cn'],
       proxy: {  
         '/socket.io': {
           target: env.VITE_BASE_URL,
@@ -48,13 +48,18 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
           assetFileNames: ({ name }) => {
+            // ** 关键修复：确保 index.html 在根目录 **
+            if (name === 'index.html') {
+              return 'index.html'; 
+            }
+            
             if (/\.(gif|jpe?g|png|svg)$/.test(name ?? '')) {
               return 'images/[name]-[hash][extname]'
             }
             if (/\.css$/.test(name ?? '')) {
               return 'css/[name]-[hash][extname]'
             }
-            return 'assets/[name]-[hash][extname]'
+            return 'assets/[name]-[hash][extname]' // 其他所有资产默认放在 assets 目录下
           },
           manualChunks(id) {
             // 把 node_modules 拆分到 vendor
