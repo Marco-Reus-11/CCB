@@ -57,7 +57,7 @@ router.post("/joinroom",auth,async(req,res)=>{
     const name = req.body.name
 })
 
-router.post("exitroom",auth,async(req,res)=>{
+router.post("/exitroom",auth,async(req,res)=>{
 
 })
 

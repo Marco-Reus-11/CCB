@@ -3,6 +3,7 @@ const express = require('express')
 const http = require('http')
 const { Server } = require('socket.io')
 const cors = require('cors')
+const path = require('path');
 
 const connectDB = require('./config/db')
 const group_msg = require('./sockets/room')
@@ -39,7 +40,7 @@ const frontendPath = path.join(__dirname, '../ccb/dist')
 app.use(express.static(frontendPath))
 
 // 对所有未匹配路由返回 index.html（支持 Vue 路由）
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'))
 })
 
@@ -49,5 +50,5 @@ io.on("connection",(socket)=>{
 })
 
 server.listen(3000, () => {
-    console.log('服务器正在运行在 http://localhost:3000');
+    // console.log('服务器正在运行在 http://localhost:3000');
 });
