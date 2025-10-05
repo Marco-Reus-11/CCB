@@ -25,6 +25,7 @@ app.use(cors({ origin: '*' }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+// ----------------- API 路由 -----------------
 app.use('/room', roomRouter)
 app.use('/user', userRouter)
 app.use("/chat",chatRouter)
@@ -32,21 +33,25 @@ app.use("/api",dsRouter)
 app.use("/upload",uploadRouter) 
 
 app.get("/user/info", auth, async (req, res) => {
-  res.json({ user: req.user })
+    res.json({ user: req.user })
 })
 
-// ----------------- Vue 前端托管 -----------------
+// ----------------- Vue 前端托管与回退 -----------------
 const frontendPath = path.join(__dirname, '../ccb/dist')
-app.use(express.static(frontendPath))
 
-// 对所有未匹配路由返回 index.html（支持 Vue 路由）
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'))
+app.use(express.static(frontendPath))
+app.use('/*path', (req, res) => {
+    if (!req.path.includes('.')) {
+        res.sendFile(path.join(frontendPath, 'index.html'))
+    } else {
+        res.status(404).send("File Not Found");
+    }
 })
 
+// ----------------- Socket.IO -----------------
 io.on("connection",(socket)=>{
-  private_msg(socket,io)
-  group_msg(socket,io)
+    private_msg(socket,io)
+    group_msg(socket,io)
 })
 
 server.listen(3000, () => {
