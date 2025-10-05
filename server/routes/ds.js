@@ -3,7 +3,7 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 const auth = require("../middlewares/auth")
-import removeMarkdown from "remove-markdown"
+const removeMarkdown = require("remove-markdown");
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
