@@ -16,7 +16,7 @@
             <div class="setting" @click="setcolor"><font-awesome-icon :icon="['fas', 'gear']" title="更换背景色"/></div>
             <div class="avatar">
                 <div class="frame">
-                    <img :src="userava" alt="用户头像">
+                    <img :src="userava" alt="">
                 </div>
             </div>
             <div class="friendname">{{username?username:"游客"}}</div>

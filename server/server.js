@@ -34,6 +34,15 @@ app.get("/user/info", auth, async (req, res) => {
   res.json({ user: req.user })
 })
 
+// ----------------- Vue 前端托管 -----------------
+const frontendPath = path.join(__dirname, '../client/dist')  // 修改成你的 Vue dist 路径
+app.use(express.static(frontendPath))
+
+// 对所有未匹配路由返回 index.html（支持 Vue 路由）
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'))
+})
+
 io.on("connection",(socket)=>{
   private_msg(socket,io)
   group_msg(socket,io)

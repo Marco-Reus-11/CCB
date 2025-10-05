@@ -29,7 +29,8 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
       port: 5173,
       open: true,
-      proxy: {
+       allowedHosts: ['.cpolar.cn'],
+      proxy: {  
         '/socket.io': {
           target: env.VITE_BASE_URL,
           ws: true,
