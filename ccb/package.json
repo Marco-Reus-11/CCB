@@ -16,6 +16,7 @@
     "bcrypt": "^6.0.0",
     "crypto-js": "^4.2.0",
     "emoji-vue": "^0.2.4",
+    "jwt-decode": "^4.0.0",
     "pinia": "^3.0.3",
     "socket.io-client": "^4.8.1",
     "terser": "^5.44.0",
