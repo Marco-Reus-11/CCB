@@ -14,20 +14,19 @@ const defaultFriendUID = '1759658414421';
 //注册
 router.post("/register", async (req, res) => {
     const { username, password } = req.body;
-    const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
-        const oldUser = await Users.findOne({ uName: username }).session(session);
+        // 1. 检查用户名是否已存在
+        const oldUser = await Users.findOne({ uName: username });
         if (oldUser) {
-            await session.abortTransaction();
             return res.status(409).json({ message: "用户名已存在,注册失败" });
         }
         
-        const uid = Date.now(); 
+        // 确保 uID 统一为字符串，与好友列表中的类型保持一致
+        const uid = String(Date.now()); 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // 1. 创建新用户 (单向添加默认好友)
+        // 2. 创建新用户 (单向添加默认好友)
         const newUser = new Users({
             uID: uid,
             uAvatar: "https://reus.oss-cn-shenzhen.aliyuncs.com/images/maodie.jpg",
@@ -36,13 +35,6 @@ router.post("/register", async (req, res) => {
             Friends: [ {uID: defaultFriendUID} ] // 新用户 -> 默认好友
         });
         
-        // 2. 查找并更新默认好友 (双向添加新用户)
-        await Users.updateOne(
-            { uID: defaultFriendUID },
-            { $push: { Friends: { uID: uid } } }, // 默认好友 -> 新用户
-            { session }
-        );
-
         // 3. 创建初始消息
         const initMsg = new Messages({
             from: defaultFriendUID,
@@ -51,20 +43,21 @@ router.post("/register", async (req, res) => {
             content: '欢迎来到Coffee Chat Bar!我是项目主理人(bushi)空佬的z字帽杀,一位全栈(偏前端)工程师。看到这条消息，请你速速来和我击剑~',
         });
 
-        // 4. 保存所有操作
-        await newUser.save({ session });
-        await initMsg.save({ session });
+        // 4. 保存新用户和初始消息
+        await newUser.save();
+        await initMsg.save();
 
-        // 5. 提交事务
-        await session.commitTransaction();
+        // 5. 查找并更新默认好友 (双向添加新用户)
+        await Users.updateOne(
+            { uID: defaultFriendUID },
+            { $push: { Friends: { uID: uid } } } // 默认好友 -> 新用户
+        );
+
         res.status(200).json({ message: `新用户 ${username} 注册成功!` });
 
     } catch (err) {
-        await session.abortTransaction();
         console.error("注册失败", err);
         res.status(500).json({ message: "服务器内部错误" });
-    } finally {
-        session.endSession();
     }
 });
 
