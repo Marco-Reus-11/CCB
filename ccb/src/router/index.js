@@ -90,8 +90,8 @@ router.beforeEach((to, from, next) => {
             }
         } catch (error) {
             console.error("JWT 解析失败，请重新登录:", error);
-            localStorage.removeItem('token');
-            next("/login");
+            // localStorage.removeItem('token');
+            next("/");
         }
         return;
     }
