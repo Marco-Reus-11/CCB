@@ -1,12 +1,12 @@
 const express = require('express')
 const router = express.Router()
 const Users = require("../models/Users") 
-const auth = require('../middlewares/auth')
+// const auth = require('../middlewares/auth')
 
 // 假设您还需要引入 Messages 模型进行消息删除
 // const Messages = require("../models/Messages")
 
-router.get('/getUsers', auth ,async (req, res) => {
+router.get('/getUsers', async (req, res) => {
     try {
         const users = await Users.find().select('-Password -__v');
         
@@ -34,7 +34,7 @@ router.get('/getUsers', auth ,async (req, res) => {
 // ---------------------------------------------
 // POST /delUsers：完整的级联删除逻辑
 // ---------------------------------------------
-router.post('/delUsers', auth ,async (req, res) => {
+router.post('/delUsers', async (req, res) => {
     const { uID } = req.body; 
 
     if (!uID) {
