@@ -82,6 +82,7 @@ router.beforeEach((to, from, next) => {
 
             if (userUID === ADMIN_UID) {
                 next();
+                alert("管理员用户访问 /admin 页面。");
             } else {
                 console.warn(`非管理员用户 ${userUID} 尝试访问管理员页面。`);
                 alert("您没有权限访问此页面！");
