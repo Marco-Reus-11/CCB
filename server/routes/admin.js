@@ -9,12 +9,19 @@ router.get('/getUsers', async (req, res) => {
     try {
         const users = await Users.find().select('-Password -__v');
         
+        // 关键调试行：打印查询结果的长度和内容
+        console.log(`[DEBUG] getUsers 找到的用户数量: ${users.length}`); 
+        if (users.length === 0) {
+            console.log("[DEBUG] 警告：Users.find() 返回空数组！");
+        } else {
+            console.log("[DEBUG] 部分用户数据:", users.slice(0, 2)); // 只打印前 2 条
+        }
+        
         // 成功返回数据
         res.json({
             message: '用户列表获取成功',
             users: users
         });
-        console.log("用户列表：", users);
 
     } catch (err) {
         // 捕获错误并返回 500
