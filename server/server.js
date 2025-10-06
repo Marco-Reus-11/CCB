@@ -55,5 +55,5 @@ io.on("connection",(socket)=>{
 })
 
 server.listen(3000, () => {
-    // console.log('服务器正在运行在 http://localhost:3000');
+    console.log('服务器正在运行在 http://localhost:3000');
 });

@@ -1,38 +1,72 @@
 const express = require("express")
 const router = express.Router()
 const Users = require("../models/Users")
+const Messages = require("../models/Messages")
 const jwt = require("jsonwebtoken")
 const auth = require("../middlewares/auth")
 const bcrypt = require('bcrypt')
+const mongoose = require('mongoose');
 
 const SECRET_KEY = 'MORTALKOMBAT'
 const saltRounds = 10
+const defaultFriendUID = '1759658414421';
 
 //注册
 router.post("/register", async (req, res) => {
     const { username, password } = req.body;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const oldUser = await Users.findOne({ uName: username });
+        const oldUser = await Users.findOne({ uName: username }).session(session);
         if (oldUser) {
-            res.status(409).json({ message: "用户名已存在,注册失败" });
-        } else {
-            const uid = Date.now();
-            const hashedPassword = await bcrypt.hash(password, saltRounds);
-            const newUser = new Users({
-                uID: uid,
-                uAvatar: "https://reus.oss-cn-shenzhen.aliyuncs.com/images/maodie.jpg",
-                uName: username,
-                Password: hashedPassword,
-                Friends: []
-            });
-            await newUser.save();
-            res.status(200).json({ message: `新用户 ${username} 注册成功!` });
+            await session.abortTransaction();
+            return res.status(409).json({ message: "用户名已存在,注册失败" });
         }
+        
+        const uid = Date.now(); 
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // 1. 创建新用户 (单向添加默认好友)
+        const newUser = new Users({
+            uID: uid,
+            uAvatar: "https://reus.oss-cn-shenzhen.aliyuncs.com/images/maodie.jpg",
+            uName: username,
+            Password: hashedPassword,
+            Friends: [ {uID: defaultFriendUID} ] // 新用户 -> 默认好友
+        });
+        
+        // 2. 查找并更新默认好友 (双向添加新用户)
+        await Users.updateOne(
+            { uID: defaultFriendUID },
+            { $push: { Friends: { uID: uid } } }, // 默认好友 -> 新用户
+            { session }
+        );
+
+        // 3. 创建初始消息
+        const initMsg = new Messages({
+            from: defaultFriendUID,
+            to: uid,
+            time: new Date(), 
+            content: '欢迎来到Coffee Chat Bar!我是项目主理人(bushi)空佬的z字帽杀,一位全栈(偏前端)工程师。看到这条消息，请你速速来和我击剑~',
+        });
+
+        // 4. 保存所有操作
+        await newUser.save({ session });
+        await initMsg.save({ session });
+
+        // 5. 提交事务
+        await session.commitTransaction();
+        res.status(200).json({ message: `新用户 ${username} 注册成功!` });
+
     } catch (err) {
+        await session.abortTransaction();
         console.error("注册失败", err);
         res.status(500).json({ message: "服务器内部错误" });
+    } finally {
+        session.endSession();
     }
-})
+});
 
 // 登录
 router.post("/login", async (req, res) => {
@@ -93,6 +127,11 @@ router.get("/friends", auth, async (req, res) => {
     const friend_list = await Promise.all(
       friends.map(async (friend) => {
         const fri = await Users.findOne({ uID: friend.uID })
+        
+        if (!fri) {
+          return null 
+        }
+
         return {
           id: fri.uID,
           name: fri.uName,
@@ -101,7 +140,8 @@ router.get("/friends", auth, async (req, res) => {
       })
     )
 
-    res.json(friend_list)
+    // 过滤掉所有 null 的项 (即无效的好友)
+    res.json(friend_list.filter(f => f !== null)) 
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

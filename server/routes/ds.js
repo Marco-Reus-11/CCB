@@ -41,7 +41,7 @@ router.post('/deepseek-chat', auth,async (req, res) => {
                 { role: "user", content: userQuestion }
             ],
             temperature: 0.7,
-            max_tokens: 30,
+            // max_tokens: 30,
             stream: false
         }, {
             headers: {

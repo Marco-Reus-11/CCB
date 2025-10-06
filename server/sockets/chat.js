@@ -14,20 +14,20 @@ module.exports = function(socket, io) {
     }
   })
 
-  socket.on("private-file-message", async ({ to, fileUrl, fileName, fileType }) => {
-    const targetSocketId = users.get(to);
-    if (targetSocketId) {
-      console.log(`用户 ${socket.userId} 发送文件: ${fileName} (${fileUrl}) 给用户 ID: ${to}`);
-      io.to(targetSocketId).emit("private-file-message", {
-        from: socket.userId,
-        fileUrl,
-        fileName,
-        fileType,
-      });
-    } else {
-      console.log(`用户 ${to} 不在线或未登录，无法发送文件消息。`);
-    }
-  });
+  // socket.on("private-file-message", async ({ to, fileUrl, fileName, fileType }) => {
+  //   const targetSocketId = users.get(to);
+  //   if (targetSocketId) {
+  //     console.log(`用户 ${socket.userId} 发送文件: ${fileName} (${fileUrl}) 给用户 ID: ${to}`);
+  //     io.to(targetSocketId).emit("private-file-message", {
+  //       from: socket.userId,
+  //       fileUrl,
+  //       fileName,
+  //       fileType,
+  //     });
+  //   } else {
+  //     console.log(`用户 ${to} 不在线或未登录，无法发送文件消息。`);
+  //   }
+  // });
 
   socket.on("disconnect", async () => {
     console.log("用户断开 ->", socket.id);

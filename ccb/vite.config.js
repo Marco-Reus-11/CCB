@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
         algorithm: 'gzip',   // 可选 'gzip' 或 'brotliCompress'
         ext: '.gz'           // 生成的压缩文件后缀
       }),
-      visualizer({ open: true }) // 构建后自动打开打包分析
+      visualizer({ open: false }) // 构建后自动打开打包分析
     ],
 
     server: {
