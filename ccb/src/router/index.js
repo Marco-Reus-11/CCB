@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+// 引入用于解析 JWT 载荷的库
+import jwt_decode from 'jwt-decode' 
 import Login from '../components/Login.vue'
 import ChatView from '../components/ChatView.vue'
 import ChatBox from '../components/ChatBox.vue'
@@ -7,69 +9,94 @@ import ChatRoom from '../views/ChatRoom.vue'
 import Content from '../views/Content.vue'
 import Assistant from '../views/Assistant.vue'
 import File from '../components/File.vue'
+import Admin from '../views/Admin.vue'
+
+// ** 配置：唯一允许访问 /admin 的用户 ID **
+const ADMIN_UID = "1759658414421"; 
 
 const routes = [
-  { path: '/',
-    component: ChatView, 
-    children:[{
-      path:"/chatdetail",
-      component:Content
+    { 
+        path: '/',
+        component: ChatView, 
+        children:[
+            { path:"/chatdetail", component: Content },
+            { path:"/chat-ai", component: Assistant }
+        ],
+        meta:{requiresAuth:true}
     },
-      {
-    path:"/chat-ai",
-    component:Assistant
-  }
-  ],
-    meta:{requiresAuth:true}
-  },
-  { path: '/chatbox', 
-    component: ChatBox, 
-    children:[{
-      path:"",
-      redirect:"/chatbox/chathall"
+    { 
+        path: '/chatbox', 
+        component: ChatBox, 
+        children:[
+            { path:"", redirect:"/chatbox/chathall" },
+            { path:"chathall", component:ChatHall },
+            { path:"chatroom", component:ChatRoom }
+        ],
+        meta:{requiresAuth:true}
     },
-
     {
-      path:"chathall",
-      component:ChatHall
+        path:"/login",
+        component:Login
     },
-
     {
-      path:"chatroom",
-      component:ChatRoom
+        path:"/test",
+        component:File
+    },
+    {
+        path:"/admin",
+        component:Admin,
+        meta:{requiresAuth:true}
+    },
+    {
+        path: '/:catchAll(.*)', // 通配符路由
+        redirect: '/'
     }
-  ],
-    meta:{requiresAuth:true}
-  },
-  {
-    path:"/login",
-    component:Login
-  },
-  {
-    path:"/test",
-    component:File
-  },
-
-  {
-    path: '/:catchAll(.*)',  // 通配符路由,如果访问错误url,自动重定向到主页
-    redirect: '/'
-  }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+    history: createWebHistory(),
+    routes
 })
 
-router.beforeEach((to,from,next)=>{
-  const isLoggedIn = localStorage.getItem('token')
-  
-  if(to.meta.requiresAuth && !isLoggedIn){
-    next("/login")
-  }
-  else{
-    next()
-  }
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token');
+    const isLoggedIn = !!token;
+    
+    // 1. 通用登录检查：需要认证但没有登录
+    if (to.meta.requiresAuth && !isLoggedIn) {
+        next("/login");
+        return;
+    }
+
+    // 2. **管理员权限检查**：只针对 /admin 路由
+    if (to.path === '/admin') {
+        // 由于上面已经检查了登录状态，这里我们直接解析 Token
+        try {
+            // 解码 JWT 获取载荷
+            const decoded = jwt_decode(token); 
+            // 确保 uID 类型匹配，这里假设 JWT 中是 'uid' 字段
+            const userUID = String(decoded.uid); 
+
+            if (userUID === ADMIN_UID) {
+                // UID 匹配，允许访问
+                next();
+            } else {
+                // UID 不匹配，权限不足
+                console.warn(`非管理员用户 ${userUID} 尝试访问管理员页面。`);
+                alert("您没有权限访问此页面！");
+                next("/"); 
+            }
+        } catch (error) {
+            // Token 格式错误、过期或解析失败
+            console.error("JWT 解析失败，请重新登录:", error);
+            localStorage.removeItem('token');
+            next("/login");
+        }
+        return;
+    }
+
+    // 3. 其他所有情况，允许访问
+    next();
 })
 
 export default router
