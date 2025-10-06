@@ -1,17 +1,12 @@
 const express = require('express')
 const router = express.Router()
-// 确保您的 Users 模型路径正确
 const Users = require("../models/Users") 
 
-// 假设您还有一个 Messages 模型用于删除聊天记录
+// 假设您还需要引入 Messages 模型进行消息删除
 // const Messages = require("../models/Messages")
 
-// ---------------------------------------------
-// GET /getUsers：获取所有用户列表
-// ---------------------------------------------
 router.get('/getUsers', async (req, res) => {
     try {
-        // 修复：直接使用 await 等待 Promise 返回结果
         const users = await Users.find().select('-Password -__v');
         
         // 成功返回数据
@@ -28,10 +23,9 @@ router.get('/getUsers', async (req, res) => {
 });
 
 // ---------------------------------------------
-// POST /delUsers：根据 uID 删除指定用户
+// POST /delUsers：完整的级联删除逻辑
 // ---------------------------------------------
 router.post('/delUsers', async (req, res) => {
-    // 假设前端在请求体 (req.body) 中发送要删除的用户的 uID
     const { uID } = req.body; 
 
     if (!uID) {
@@ -39,23 +33,32 @@ router.post('/delUsers', async (req, res) => {
     }
 
     try {
-        // 1. 删除用户记录
+        // 1. 删除目标用户本身的记录
         const deletedUser = await Users.findOneAndDelete({ uID: uID });
 
         if (!deletedUser) {
-            // 如果 result 为 null，表示没有找到匹配的 uID
             return res.status(404).json({ message: `未找到 uID 为 ${uID} 的用户` });
         }
         
-        // 2. ❗ 关键：删除该用户的所有聊天记录 (如果 Messages 模型可用的话)
+        // 2. ❗ 关键修复：从所有其他用户的好友列表中移除被删除的用户
+        // 使用 $pull 操作符从所有文档的 Friends 数组中拉出匹配的 uID
+        await Users.updateMany(
+            {}, // 匹配所有用户
+            { $pull: { Friends: { uID: uID } } } // 从 Friends 数组中移除 uID 等于目标 uID 的项
+        );
+
+        // 3. 删除该用户的所有聊天记录 (请取消注释并确保 Messages 模型已引入)
         /* await Messages.deleteMany({ 
-            $or: [{ from: uID }, { to: uID }] 
+             $or: [
+                 { from: uID }, 
+                 { to: uID }
+             ] 
         });
         */
 
         res.status(200).json({ 
-            message: `用户 ${deletedUser.uName} (uID: ${uID}) 已成功删除`,
-            deletedUser: deletedUser // 返回被删除的用户信息
+            message: `用户 ${deletedUser.uName} (uID: ${uID}) 及其相关的好友关系已成功删除`,
+            deletedUser: deletedUser
         });
 
     } catch (err) {

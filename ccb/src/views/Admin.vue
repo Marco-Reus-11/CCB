@@ -49,6 +49,7 @@ const fetchUsers = async () => {
         
         // 假设后端返回的数据结构是 { message: '...', users: [...] }
         users.value = res.data.users || []; 
+        console.log('返回的数据：',users.value)
         
     } catch (err) {
         console.error("获取用户列表失败:", err);
