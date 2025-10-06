@@ -13,6 +13,7 @@ const userRouter = require('./routes/user')
 const chatRouter = require('./routes/chat')
 const uploadRouter = require('./routes/upload')
 const dsRouter = require("./routes/ds")
+const adminRouter = require("./routes/admin")
 const auth = require("./middlewares/auth")
 
 const app = express()
@@ -30,6 +31,7 @@ app.use('/room', roomRouter)
 app.use('/user', userRouter)
 app.use("/chat",chatRouter)
 app.use("/api",dsRouter) 
+app.use("/admin",adminRouter) 
 app.use("/upload",uploadRouter) 
 
 app.get("/user/info", auth, async (req, res) => {
