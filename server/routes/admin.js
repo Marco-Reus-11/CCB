@@ -8,23 +8,27 @@ const Users = require("../models/Users")
 
 router.get('/getUsers', async (req, res) => {
     try {
+        // *** [临时调试代码] ***
+        // 尝试添加一个明显的新用户，看它是否会出现在 db.users.find() 的结果中
+        const testUID = "99999";
+        await Users.updateOne(
+            { uID: testUID }, 
+            { $set: { uName: 'TEMP_TEST_USER' } }, 
+            { upsert: true } // 如果不存在就创建
+        );
+        console.log("【测试】已尝试插入测试用户 99999。");
+        // *** [临时调试代码结束] ***
+        
         const users = await Users.find().select('-Password -__v');
         
-        // 关键调试行：打印查询结果的长度和内容
+        // 关键调试行：观察这里的输出！
         console.log(`[DEBUG] getUsers 找到的用户数量: ${users.length}`); 
-        if (users.length === 0) {
-            console.log("[DEBUG] 警告：Users.find() 返回空数组！");
-        } else {
-            console.log("[DEBUG] 部分用户数据:", users.slice(0, 2)); // 只打印前 2 条
-        }
         
-        // 成功返回数据
         res.json({
             message: '用户列表获取成功',
             users: users
         });
-
-    } catch (err) {
+    }catch (err) {
         // 捕获错误并返回 500
         console.error("获取用户列表失败", err);
         res.status(500).json({ message: "服务器内部错误" });
