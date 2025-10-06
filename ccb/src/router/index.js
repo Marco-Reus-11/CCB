@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // 引入用于解析 JWT 载荷的库
-import jwt_decode from 'jwt-decode' 
+
+import * as jwt_decode from 'jwt-decode'
+
 import Login from '../components/Login.vue'
 import ChatView from '../components/ChatView.vue'
 import ChatBox from '../components/ChatBox.vue'
@@ -70,24 +72,22 @@ router.beforeEach((to, from, next) => {
 
     // 2. **管理员权限检查**：只针对 /admin 路由
     if (to.path === '/admin') {
-        // 由于上面已经检查了登录状态，这里我们直接解析 Token
         try {
-            // 解码 JWT 获取载荷
-            const decoded = jwt_decode(token); 
-            // 确保 uID 类型匹配，这里假设 JWT 中是 'uid' 字段
+            // ** 关键修复：当使用 * as 导入时，实际的函数可能挂载在 .default 属性上，但对于 jwt-decode 通常可以直接调用导入的对象 **
+            // 确保调用的是解码函数
+            const decodeFunction = typeof jwt_decode === 'function' ? jwt_decode : jwt_decode.default;
+            
+            const decoded = decodeFunction(token); 
             const userUID = String(decoded.uid); 
 
             if (userUID === ADMIN_UID) {
-                // UID 匹配，允许访问
                 next();
             } else {
-                // UID 不匹配，权限不足
                 console.warn(`非管理员用户 ${userUID} 尝试访问管理员页面。`);
                 alert("您没有权限访问此页面！");
                 next("/"); 
             }
         } catch (error) {
-            // Token 格式错误、过期或解析失败
             console.error("JWT 解析失败，请重新登录:", error);
             localStorage.removeItem('token');
             next("/login");
