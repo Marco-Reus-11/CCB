@@ -14,6 +14,7 @@ router.get('/getUsers', async (req, res) => {
             message: '用户列表获取成功',
             users: users
         });
+        console.log("用户列表：", users);
 
     } catch (err) {
         // 捕获错误并返回 500
