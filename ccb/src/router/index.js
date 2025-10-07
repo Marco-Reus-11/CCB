@@ -47,7 +47,7 @@ const routes = [
     {
         path:"/admin",
         component:Admin,
-        meta:{requiresAuth:true} // 仍需要登录
+        // meta:{requiresAuth:true} // 仍需要登录
     },
     {
         path: '/:catchAll(.*)', // 通配符路由
